@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>El Mordiscón — Inventario de Licores</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f0f0f;
+      color: #e8e0d4;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1a0a00, #2d1200);
+      border-bottom: 2px solid #8b4513;
+      padding: 1.2rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    header h1 { font-size: 1.5rem; color: #d4a96a; letter-spacing: .05em; }
+    header span { font-size: 1.8rem; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+
+    /* Tarjetas de resumen */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: #1c1008;
+      border: 1px solid #3d2008;
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      text-align: center;
+    }
+    .stat-card .num { font-size: 2rem; font-weight: 700; color: #d4a96a; }
+    .stat-card .label { font-size: .78rem; color: #9a8060; margin-top: .2rem; text-transform: uppercase; letter-spacing: .06em; }
+
+    /* Barra de acciones */
+    .toolbar {
+      display: flex;
+      gap: .7rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.2rem;
+      align-items: center;
+    }
+    .toolbar input[type=text] {
+      flex: 1;
+      min-width: 180px;
+      background: #1c1008;
+      border: 1px solid #3d2008;
+      border-radius: 8px;
+      color: #e8e0d4;
+      padding: .55rem .9rem;
+      font-size: .9rem;
+      outline: none;
+    }
+    .toolbar input[type=text]:focus { border-color: #8b4513; }
+    .toolbar select {
+      background: #1c1008;
+      border: 1px solid #3d2008;
+      border-radius: 8px;
+      color: #e8e0d4;
+      padding: .55rem .9rem;
+      font-size: .9rem;
+      outline: none;
+      cursor: pointer;
+    }
+    .btn {
+      padding: .55rem 1.1rem;
+      border: none;
+      border-radius: 8px;
+      font-size: .88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn-primary { background: #8b4513; color: #fff; }
+    .btn-success { background: #2d6a2d; color: #fff; }
+    .btn-danger  { background: #6a2020; color: #fff; }
+    .btn-sm { padding: .3rem .7rem; font-size: .8rem; }
+
+    /* Tabla */
+    .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid #3d2008; }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: #1a0a00; }
+    th {
+      padding: .75rem 1rem;
+      text-align: left;
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: #9a8060;
+    }
+    td { padding: .7rem 1rem; border-top: 1px solid #2a1500; font-size: .9rem; }
+    tr:hover td { background: #1c1008; }
+    .badge {
+      display: inline-block;
+      padding: .2rem .55rem;
+      border-radius: 20px;
+      font-size: .72rem;
+      font-weight: 600;
+    }
+    .badge-ok    { background: #1a3d1a; color: #6dcc6d; }
+    .badge-low   { background: #3d3200; color: #ccaa00; }
+    .badge-empty { background: #3d1010; color: #cc4444; }
+
+    /* Modal */
+    .overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.75);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      background: #1a0a00;
+      border: 1px solid #8b4513;
+      border-radius: 14px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 460px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal h2 { color: #d4a96a; margin-bottom: 1.2rem; font-size: 1.1rem; }
+    .field { margin-bottom: 1rem; }
+    .field label { display: block; font-size: .8rem; color: #9a8060; margin-bottom: .3rem; text-transform: uppercase; letter-spacing: .05em; }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      background: #0f0f0f;
+      border: 1px solid #3d2008;
+      border-radius: 8px;
+      color: #e8e0d4;
+      padding: .6rem .85rem;
+      font-size: .9rem;
+      outline: none;
+      font-family: inherit;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: #8b4513; }
+    .modal-actions { display: flex; gap: .7rem; justify-content: flex-end; margin-top: 1.4rem; }
+    .btn-ghost { background: transparent; border: 1px solid #3d2008; color: #9a8060; }
+
+    .empty-msg { text-align: center; padding: 3rem; color: #6a5040; font-size: .95rem; }
+
+    /* Alertas flotantes */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem; right: 1.5rem;
+      background: #2d6a2d;
+      color: #fff;
+      padding: .8rem 1.2rem;
+      border-radius: 10px;
+      font-size: .88rem;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all .3s;
+      z-index: 999;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.error { background: #6a2020; }
+  </style>
+</head>
+<body>
+
+<header>
+  <span>🍷</span>
+  <h1>El Mordiscón &mdash; Inventario de Licores y Vinos</h1>
+</header>
+
+<div class="container">
+
+  <!-- Resumen -->
+  <div class="stats">
+    <div class="stat-card"><div class="num" id="s-total">0</div><div class="label">Productos</div></div>
+    <div class="stat-card"><div class="num" id="s-units">0</div><div class="label">Unidades</div></div>
+    <div class="stat-card"><div class="num" id="s-valor">$0</div><div class="label">Valor estimado</div></div>
+    <div class="stat-card"><div class="num" id="s-low" style="color:#ccaa00">0</div><div class="label">Bajo stock</div></div>
+    <div class="stat-card"><div class="num" id="s-empty" style="color:#cc4444">0</div><div class="label">Agotados</div></div>
+  </div>
+
+  <!-- Barra de herramientas -->
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="🔍  Buscar producto..." oninput="render()" />
+    <select id="filtro-cat" onchange="render()">
+      <option value="">Todas las categorías</option>
+    </select>
+    <button class="btn btn-primary" onclick="openModal()">+ Agregar producto</button>
+    <button class="btn btn-success" onclick="exportCSV()">↓ Exportar CSV</button>
+  </div>
+
+  <!-- Tabla -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Nombre</th>
+          <th>Categoría</th>
+          <th>Stock</th>
+          <th>Precio</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty-msg" id="empty-msg" style="display:none">Sin productos. Agrega el primero 🍾</div>
+  </div>
+</div>
+
+<!-- Modal agregar / editar -->
+<div class="overlay" id="overlay" onclick="closeIfBg(event)">
+  <div class="modal">
+    <h2 id="modal-title">Agregar producto</h2>
+    <input type="hidden" id="edit-id" value="" />
+
+    <div class="field"><label>Nombre</label><input type="text" id="f-nombre" placeholder="Ej. Johnnie Walker Black" /></div>
+    <div class="field">
+      <label>Categoría</label>
+      <select id="f-cat"></select>
+    </div>
+    <div class="field"><label>Cantidad en stock</label><input type="number" id="f-cant" min="0" value="0" /></div>
+    <div class="field"><label>Stock mínimo (alerta)</label><input type="number" id="f-min" min="0" value="2" /></div>
+    <div class="field"><label>Precio por botella ($)</label><input type="number" id="f-precio" min="0" step="0.01" placeholder="Opcional" /></div>
+    <div class="field"><label>Notas</label><textarea id="f-notas" rows="2" placeholder="Opcional"></textarea></div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardar()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal ajuste de stock -->
+<div class="overlay" id="overlay-stock" onclick="closeIfBgStock(event)">
+  <div class="modal">
+    <h2 id="stock-title">Actualizar stock</h2>
+    <input type="hidden" id="stock-id" />
+    <div class="field">
+      <label>Operación</label>
+      <select id="stock-op">
+        <option value="add">➕ Sumar unidades (entrada)</option>
+        <option value="sub">➖ Restar unidades (salida)</option>
+        <option value="set">🔢 Establecer cantidad exacta</option>
+      </select>
+    </div>
+    <div class="field"><label>Cantidad</label><input type="number" id="stock-cant" min="0" value="1" /></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeStockModal()">Cancelar</button>
+      <button class="btn btn-success" onclick="aplicarStock()">Aplicar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CATEGORIAS = [
+  "Whisky","Ron","Tequila","Vodka","Gin","Mezcal",
+  "Brandy / Cognac","Vino tinto","Vino blanco","Vino rosado",
+  "Cerveza","Licor / Aperitivo","Champagne / Espumoso","Otro"
+];
+
+// Inicializar selects de categoría
+function initSelects() {
+  [document.getElementById('filtro-cat'), document.getElementById('f-cat')].forEach((sel, i) => {
+    if (i === 0) return; // filtro ya tiene "Todas"
+    sel.innerHTML = CATEGORIAS.map(c => `<option value="${c}">${c}</option>`).join('');
+  });
+  const fc = document.getElementById('filtro-cat');
+  CATEGORIAS.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = c;
+    fc.appendChild(o);
+  });
+}
+
+// Persistencia
+function load() { return JSON.parse(localStorage.getItem('mordiscon-inv') || '[]'); }
+function save(data) { localStorage.setItem('mordiscon-inv', JSON.stringify(data)); }
+function nextId(data) { return data.length ? Math.max(...data.map(b => b.id)) + 1 : 1; }
+
+// Render principal
+function render() {
+  const data = load();
+  const q = document.getElementById('search').value.toLowerCase();
+  const cat = document.getElementById('filtro-cat').value;
+
+  let items = data.filter(b =>
+    (!q || b.nombre.toLowerCase().includes(q)) &&
+    (!cat || b.categoria === cat)
+  );
+
+  // Stats (sobre todos los datos, no el filtro)
+  const low   = data.filter(b => b.cantidad > 0 && b.cantidad <= b.minimo);
+  const empty = data.filter(b => b.cantidad === 0);
+  const valor = data.reduce((s, b) => s + (b.precio || 0) * b.cantidad, 0);
+  document.getElementById('s-total').textContent = data.length;
+  document.getElementById('s-units').textContent = data.reduce((s,b)=>s+b.cantidad,0);
+  document.getElementById('s-valor').textContent = '$' + valor.toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2});
+  document.getElementById('s-low').textContent   = low.length;
+  document.getElementById('s-empty').textContent = empty.length;
+
+  const tbody = document.getElementById('tbody');
+  const emptyMsg = document.getElementById('empty-msg');
+
+  if (items.length === 0) {
+    tbody.innerHTML = '';
+    emptyMsg.style.display = 'block';
+    return;
+  }
+  emptyMsg.style.display = 'none';
+
+  tbody.innerHTML = items.map(b => {
+    const precio = b.precio != null ? '$' + Number(b.precio).toLocaleString('es-MX',{minimumFractionDigits:2}) : '—';
+    let badge;
+    if (b.cantidad === 0)             badge = '<span class="badge badge-empty">🚫 Agotado</span>';
+    else if (b.cantidad <= b.minimo)  badge = '<span class="badge badge-low">⚠️ Bajo stock</span>';
+    else                              badge = '<span class="badge badge-ok">✓ OK</span>';
+
+    return `<tr>
+      <td style="color:#6a5040">${b.id}</td>
+      <td><strong>${esc(b.nombre)}</strong>${b.notas ? `<br><small style="color:#6a5040">${esc(b.notas)}</small>` : ''}</td>
+      <td style="color:#9a8060">${esc(b.categoria)}</td>
+      <td><strong>${b.cantidad}</strong></td>
+      <td>${precio}</td>
+      <td>${badge}</td>
+      <td>
+        <button class="btn btn-sm" style="background:#2a3d2a;color:#adf" onclick="openStockModal(${b.id})">Stock</button>
+        <button class="btn btn-sm btn-primary" onclick="openModal(${b.id})" style="margin:0 .3rem">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="eliminar(${b.id})">Borrar</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Modal agregar/editar
+function openModal(id) {
+  const overlay = document.getElementById('overlay');
+  document.getElementById('edit-id').value = id || '';
+  if (id) {
+    const b = load().find(x => x.id === id);
+    document.getElementById('modal-title').textContent = 'Editar producto';
+    document.getElementById('f-nombre').value = b.nombre;
+    document.getElementById('f-cat').value    = b.categoria;
+    document.getElementById('f-cant').value   = b.cantidad;
+    document.getElementById('f-min').value    = b.minimo;
+    document.getElementById('f-precio').value = b.precio ?? '';
+    document.getElementById('f-notas').value  = b.notas || '';
+  } else {
+    document.getElementById('modal-title').textContent = 'Agregar producto';
+    document.getElementById('f-nombre').value = '';
+    document.getElementById('f-cant').value   = 0;
+    document.getElementById('f-min').value    = 2;
+    document.getElementById('f-precio').value = '';
+    document.getElementById('f-notas').value  = '';
+  }
+  overlay.classList.add('open');
+  document.getElementById('f-nombre').focus();
+}
+function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+function closeIfBg(e) { if (e.target === document.getElementById('overlay')) closeModal(); }
+
+function guardar() {
+  const nombre = document.getElementById('f-nombre').value.trim();
+  if (!nombre) { toast('El nombre es obligatorio', true); return; }
+
+  const data = load();
+  const editId = document.getElementById('edit-id').value;
+  const precio = document.getElementById('f-precio').value;
+
+  if (editId) {
+    const b = data.find(x => x.id === Number(editId));
+    b.nombre    = nombre;
+    b.categoria = document.getElementById('f-cat').value;
+    b.cantidad  = Number(document.getElementById('f-cant').value) || 0;
+    b.minimo    = Number(document.getElementById('f-min').value)  || 0;
+    b.precio    = precio !== '' ? Number(precio) : null;
+    b.notas     = document.getElementById('f-notas').value.trim();
+  } else {
+    data.push({
+      id:          nextId(data),
+      nombre,
+      categoria:   document.getElementById('f-cat').value,
+      cantidad:    Number(document.getElementById('f-cant').value) || 0,
+      minimo:      Number(document.getElementById('f-min').value)  || 0,
+      precio:      precio !== '' ? Number(precio) : null,
+      notas:       document.getElementById('f-notas').value.trim(),
+      fecha:       new Date().toISOString().slice(0,10),
+    });
+  }
+  save(data);
+  closeModal();
+  render();
+  toast(editId ? 'Producto actualizado ✓' : 'Producto agregado ✓');
+}
+
+// Modal stock
+function openStockModal(id) {
+  const b = load().find(x => x.id === id);
+  document.getElementById('stock-id').value = id;
+  document.getElementById('stock-title').textContent = `Stock — ${b.nombre}`;
+  document.getElementById('stock-cant').value = 1;
+  document.getElementById('overlay-stock').classList.add('open');
+}
+function closeStockModal() { document.getElementById('overlay-stock').classList.remove('open'); }
+function closeIfBgStock(e) { if (e.target === document.getElementById('overlay-stock')) closeStockModal(); }
+
+function aplicarStock() {
+  const id   = Number(document.getElementById('stock-id').value);
+  const op   = document.getElementById('stock-op').value;
+  const cant = Number(document.getElementById('stock-cant').value) || 0;
+  const data = load();
+  const b    = data.find(x => x.id === id);
+  if (op === 'add') b.cantidad += cant;
+  else if (op === 'sub') b.cantidad = Math.max(0, b.cantidad - cant);
+  else b.cantidad = Math.max(0, cant);
+  save(data);
+  closeStockModal();
+  render();
+  toast(`Stock actualizado: ${b.cantidad} unidades ✓`);
+}
+
+function eliminar(id) {
+  const b = load().find(x => x.id === id);
+  if (!confirm(`¿Eliminar "${b.nombre}"?`)) return;
+  save(load().filter(x => x.id !== id));
+  render();
+  toast('Producto eliminado');
+}
+
+// Exportar CSV
+function exportCSV() {
+  const data = load();
+  if (!data.length) { toast('No hay datos para exportar', true); return; }
+  const rows = [['ID','Nombre','Categoria','Cantidad','Minimo','Precio','Notas','Fecha']];
+  data.forEach(b => rows.push([b.id, b.nombre, b.categoria, b.cantidad, b.minimo, b.precio ?? '', b.notas, b.fecha || '']));
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = 'inventario-licores.csv';
+  a.click();
+  toast('CSV exportado ✓');
+}
+
+// Toast
+function toast(msg, error=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (error ? ' error' : '');
+  void t.offsetWidth;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+initSelects();
+render();
+</script>
+</body>
+</html>
