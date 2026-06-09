@@ -1,177 +1,97 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>El Mordiscón — Inventario de Licores</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>El Mordiscón — Inventario</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0ece6;color:#2d2218;min-height:100vh;}
 
-    body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: #0f0f0f;
-      color: #e8e0d4;
-      min-height: 100vh;
-    }
+header{background:linear-gradient(135deg,#6b1a1a,#a0522d);padding:1rem 2rem;display:flex;align-items:center;gap:1rem;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+header h1{font-size:1.4rem;color:#fff;letter-spacing:.04em;}
+header span{font-size:1.8rem;}
 
-    header {
-      background: linear-gradient(135deg, #1a0a00, #2d1200);
-      border-bottom: 2px solid #8b4513;
-      padding: 1.2rem 2rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    header h1 { font-size: 1.5rem; color: #d4a96a; letter-spacing: .05em; }
-    header span { font-size: 1.8rem; }
+nav{background:#fff;border-bottom:2px solid #d4a96a;display:flex;gap:0;overflow-x:auto;}
+nav button{padding:.75rem 1.4rem;border:none;background:none;font-size:.88rem;font-weight:600;color:#7a5c3c;cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;transition:all .2s;}
+nav button:hover{background:#fdf5eb;color:#6b1a1a;}
+nav button.active{color:#6b1a1a;border-bottom-color:#6b1a1a;background:#fdf5eb;}
 
-    .container { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+.container{max-width:1200px;margin:0 auto;padding:1.5rem;}
 
-    /* Tarjetas de resumen */
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-    .stat-card {
-      background: #1c1008;
-      border: 1px solid #3d2008;
-      border-radius: 10px;
-      padding: 1rem 1.2rem;
-      text-align: center;
-    }
-    .stat-card .num { font-size: 2rem; font-weight: 700; color: #d4a96a; }
-    .stat-card .label { font-size: .78rem; color: #9a8060; margin-top: .2rem; text-transform: uppercase; letter-spacing: .06em; }
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem;}
+.stat{background:#fff;border:1px solid #e0d4c4;border-radius:12px;padding:1rem;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.stat .num{font-size:1.9rem;font-weight:700;color:#6b1a1a;}
+.stat .lbl{font-size:.75rem;color:#9a7a5a;margin-top:.2rem;text-transform:uppercase;letter-spacing:.05em;}
 
-    /* Barra de acciones */
-    .toolbar {
-      display: flex;
-      gap: .7rem;
-      flex-wrap: wrap;
-      margin-bottom: 1.2rem;
-      align-items: center;
-    }
-    .toolbar input[type=text] {
-      flex: 1;
-      min-width: 180px;
-      background: #1c1008;
-      border: 1px solid #3d2008;
-      border-radius: 8px;
-      color: #e8e0d4;
-      padding: .55rem .9rem;
-      font-size: .9rem;
-      outline: none;
-    }
-    .toolbar input[type=text]:focus { border-color: #8b4513; }
-    .toolbar select {
-      background: #1c1008;
-      border: 1px solid #3d2008;
-      border-radius: 8px;
-      color: #e8e0d4;
-      padding: .55rem .9rem;
-      font-size: .9rem;
-      outline: none;
-      cursor: pointer;
-    }
-    .btn {
-      padding: .55rem 1.1rem;
-      border: none;
-      border-radius: 8px;
-      font-size: .88rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity .15s;
-    }
-    .btn:hover { opacity: .85; }
-    .btn-primary { background: #8b4513; color: #fff; }
-    .btn-success { background: #2d6a2d; color: #fff; }
-    .btn-danger  { background: #6a2020; color: #fff; }
-    .btn-sm { padding: .3rem .7rem; font-size: .8rem; }
+/* Toolbar */
+.toolbar{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center;}
+.toolbar input,.toolbar select{background:#fff;border:1px solid #d0bfa8;border-radius:8px;color:#2d2218;padding:.55rem .85rem;font-size:.88rem;outline:none;}
+.toolbar input{flex:1;min-width:180px;}
+.toolbar input:focus,.toolbar select:focus{border-color:#a0522d;}
 
-    /* Tabla */
-    .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid #3d2008; }
-    table { width: 100%; border-collapse: collapse; }
-    thead { background: #1a0a00; }
-    th {
-      padding: .75rem 1rem;
-      text-align: left;
-      font-size: .78rem;
-      text-transform: uppercase;
-      letter-spacing: .07em;
-      color: #9a8060;
-    }
-    td { padding: .7rem 1rem; border-top: 1px solid #2a1500; font-size: .9rem; }
-    tr:hover td { background: #1c1008; }
-    .badge {
-      display: inline-block;
-      padding: .2rem .55rem;
-      border-radius: 20px;
-      font-size: .72rem;
-      font-weight: 600;
-    }
-    .badge-ok    { background: #1a3d1a; color: #6dcc6d; }
-    .badge-low   { background: #3d3200; color: #ccaa00; }
-    .badge-empty { background: #3d1010; color: #cc4444; }
+.btn{padding:.55rem 1.1rem;border:none;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s;}
+.btn:hover{filter:brightness(.93);}
+.btn-primary{background:#6b1a1a;color:#fff;}
+.btn-wine{background:#a0522d;color:#fff;}
+.btn-green{background:#2e7d32;color:#fff;}
+.btn-gold{background:#b8860b;color:#fff;}
+.btn-ghost{background:#fff;border:1px solid #c0a882;color:#7a5c3c;}
+.btn-sm{padding:.3rem .65rem;font-size:.78rem;}
+.btn-red{background:#c62828;color:#fff;}
 
-    /* Modal */
-    .overlay {
-      display: none;
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.75);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
-    }
-    .overlay.open { display: flex; }
-    .modal {
-      background: #1a0a00;
-      border: 1px solid #8b4513;
-      border-radius: 14px;
-      padding: 2rem;
-      width: 100%;
-      max-width: 460px;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    .modal h2 { color: #d4a96a; margin-bottom: 1.2rem; font-size: 1.1rem; }
-    .field { margin-bottom: 1rem; }
-    .field label { display: block; font-size: .8rem; color: #9a8060; margin-bottom: .3rem; text-transform: uppercase; letter-spacing: .05em; }
-    .field input, .field select, .field textarea {
-      width: 100%;
-      background: #0f0f0f;
-      border: 1px solid #3d2008;
-      border-radius: 8px;
-      color: #e8e0d4;
-      padding: .6rem .85rem;
-      font-size: .9rem;
-      outline: none;
-      font-family: inherit;
-    }
-    .field input:focus, .field select:focus, .field textarea:focus { border-color: #8b4513; }
-    .modal-actions { display: flex; gap: .7rem; justify-content: flex-end; margin-top: 1.4rem; }
-    .btn-ghost { background: transparent; border: 1px solid #3d2008; color: #9a8060; }
+/* Table */
+.card{background:#fff;border:1px solid #e0d4c4;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+table{width:100%;border-collapse:collapse;}
+thead{background:#f7f0e6;}
+th{padding:.7rem 1rem;text-align:left;font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:#7a5c3c;}
+td{padding:.65rem 1rem;border-top:1px solid #f0e8d8;font-size:.88rem;}
+tr:hover td{background:#fdf8f2;}
 
-    .empty-msg { text-align: center; padding: 3rem; color: #6a5040; font-size: .95rem; }
+.badge{display:inline-block;padding:.18rem .5rem;border-radius:20px;font-size:.72rem;font-weight:700;}
+.b-ok{background:#e8f5e9;color:#2e7d32;}
+.b-low{background:#fff8e1;color:#f57f17;}
+.b-empty{background:#ffebee;color:#c62828;}
 
-    /* Alertas flotantes */
-    .toast {
-      position: fixed;
-      bottom: 1.5rem; right: 1.5rem;
-      background: #2d6a2d;
-      color: #fff;
-      padding: .8rem 1.2rem;
-      border-radius: 10px;
-      font-size: .88rem;
-      opacity: 0;
-      transform: translateY(10px);
-      transition: all .3s;
-      z-index: 999;
-      pointer-events: none;
-    }
-    .toast.show { opacity: 1; transform: translateY(0); }
-    .toast.error { background: #6a2020; }
-  </style>
+/* Sección pedido */
+.pedido-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.8rem;margin-bottom:1rem;}
+.pedido-title{font-size:1.1rem;font-weight:700;color:#6b1a1a;}
+
+/* Historial */
+.hist-item{background:#fff;border:1px solid #e0d4c4;border-radius:10px;padding:1rem 1.2rem;margin-bottom:.7rem;}
+.hist-date{font-weight:700;color:#6b1a1a;margin-bottom:.4rem;}
+.hist-productos{display:flex;flex-wrap:wrap;gap:.4rem;}
+.hist-tag{background:#f7f0e6;border-radius:6px;padding:.2rem .55rem;font-size:.78rem;color:#5a3a1a;}
+
+/* Modal */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:14px;padding:1.8rem;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2);}
+.modal h2{color:#6b1a1a;margin-bottom:1.2rem;font-size:1.1rem;}
+.field{margin-bottom:.9rem;}
+.field label{display:block;font-size:.78rem;color:#9a7a5a;margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.04em;}
+.field input,.field select,.field textarea{width:100%;border:1px solid #d0bfa8;border-radius:8px;padding:.6rem .85rem;font-size:.9rem;outline:none;color:#2d2218;font-family:inherit;}
+.field input:focus,.field select:focus{border-color:#a0522d;}
+.modal-actions{display:flex;gap:.6rem;justify-content:flex-end;margin-top:1.2rem;}
+
+/* Recibir pedido */
+.recibir-box{background:#f0f7f0;border:1.5px solid #a5d6a7;border-radius:12px;padding:1.2rem;margin-bottom:1.2rem;}
+.recibir-box h3{color:#2e7d32;margin-bottom:.8rem;}
+
+/* Toast */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#2e7d32;color:#fff;padding:.8rem 1.2rem;border-radius:10px;font-size:.88rem;opacity:0;transform:translateY(8px);transition:all .3s;z-index:999;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.err{background:#c62828;}
+
+/* Sections */
+.section{display:none;}
+.section.active{display:block;}
+
+/* Cajas display */
+.stock-detail{font-size:.75rem;color:#9a7a5a;}
+</style>
 </head>
 <body>
 
@@ -180,298 +100,581 @@
   <h1>El Mordiscón &mdash; Inventario de Licores y Vinos</h1>
 </header>
 
+<nav>
+  <button class="active" onclick="showTab('inventario',this)">📦 Inventario</button>
+  <button onclick="showTab('pedido',this)">🛒 Pedido Semanal</button>
+  <button onclick="showTab('recepciones',this)">📅 Recepciones</button>
+</nav>
+
 <div class="container">
 
-  <!-- Resumen -->
+<!-- ===== INVENTARIO ===== -->
+<div id="tab-inventario" class="section active">
   <div class="stats">
-    <div class="stat-card"><div class="num" id="s-total">0</div><div class="label">Productos</div></div>
-    <div class="stat-card"><div class="num" id="s-units">0</div><div class="label">Unidades</div></div>
-    <div class="stat-card"><div class="num" id="s-valor">$0</div><div class="label">Valor estimado</div></div>
-    <div class="stat-card"><div class="num" id="s-low" style="color:#ccaa00">0</div><div class="label">Bajo stock</div></div>
-    <div class="stat-card"><div class="num" id="s-empty" style="color:#cc4444">0</div><div class="label">Agotados</div></div>
+    <div class="stat"><div class="num" id="s-total">0</div><div class="lbl">Productos</div></div>
+    <div class="stat"><div class="num" id="s-units">0</div><div class="lbl">Unidades totales</div></div>
+    <div class="stat"><div class="num" id="s-low" style="color:#f57f17">0</div><div class="lbl">Bajo quiebre</div></div>
+    <div class="stat"><div class="num" id="s-empty" style="color:#c62828">0</div><div class="lbl">Agotados</div></div>
+    <div class="stat"><div class="num" id="s-pedido" style="color:#a0522d">0</div><div class="lbl">Con pedido sugerido</div></div>
   </div>
 
-  <!-- Barra de herramientas -->
   <div class="toolbar">
-    <input type="text" id="search" placeholder="🔍  Buscar producto..." oninput="render()" />
-    <select id="filtro-cat" onchange="render()">
+    <input type="text" id="search" placeholder="🔍  Buscar producto..." oninput="renderInv()"/>
+    <select id="filtro-cat" onchange="renderInv()">
       <option value="">Todas las categorías</option>
     </select>
-    <button class="btn btn-primary" onclick="openModal()">+ Agregar producto</button>
-    <button class="btn btn-success" onclick="exportCSV()">↓ Exportar CSV</button>
+    <button class="btn btn-primary" onclick="openModalProd()">+ Agregar producto</button>
+    <button class="btn btn-wine" onclick="exportCSV()">↓ Exportar CSV</button>
   </div>
 
-  <!-- Tabla -->
-  <div class="table-wrap">
+  <div class="card">
     <table>
       <thead>
         <tr>
-          <th>#</th>
-          <th>Nombre</th>
+          <th>Producto</th>
           <th>Categoría</th>
-          <th>Stock</th>
-          <th>Precio</th>
+          <th>Stock (unid.)</th>
+          <th>Quiebre</th>
           <th>Estado</th>
           <th>Acciones</th>
         </tr>
       </thead>
-      <tbody id="tbody"></tbody>
+      <tbody id="tbody-inv"></tbody>
     </table>
-    <div class="empty-msg" id="empty-msg" style="display:none">Sin productos. Agrega el primero 🍾</div>
+    <div id="inv-empty" style="display:none;text-align:center;padding:2.5rem;color:#9a7a5a;">Sin productos 🍾</div>
   </div>
 </div>
 
-<!-- Modal agregar / editar -->
-<div class="overlay" id="overlay" onclick="closeIfBg(event)">
-  <div class="modal">
-    <h2 id="modal-title">Agregar producto</h2>
-    <input type="hidden" id="edit-id" value="" />
-
-    <div class="field"><label>Nombre</label><input type="text" id="f-nombre" placeholder="Ej. Johnnie Walker Black" /></div>
-    <div class="field">
-      <label>Categoría</label>
-      <select id="f-cat"></select>
+<!-- ===== PEDIDO SEMANAL ===== -->
+<div id="tab-pedido" class="section">
+  <div class="pedido-header">
+    <div class="pedido-title">🛒 Pedido Semanal — Productos bajo quiebre</div>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+      <button class="btn btn-green" onclick="openRecibirModal()">✅ Registrar recepción (Sábado)</button>
+      <button class="btn btn-gold" onclick="exportPedidoXLSX()">↓ Descargar Excel</button>
     </div>
-    <div class="field"><label>Cantidad en stock</label><input type="number" id="f-cant" min="0" value="0" /></div>
-    <div class="field"><label>Stock mínimo (alerta)</label><input type="number" id="f-min" min="0" value="2" /></div>
-    <div class="field"><label>Precio por botella ($)</label><input type="number" id="f-precio" min="0" step="0.01" placeholder="Opcional" /></div>
-    <div class="field"><label>Notas</label><textarea id="f-notas" rows="2" placeholder="Opcional"></textarea></div>
+  </div>
 
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardar()">Guardar</button>
-    </div>
+  <div class="card" style="margin-bottom:1.2rem;">
+    <table>
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Categoría</th>
+          <th>Stock actual</th>
+          <th>Quiebre</th>
+          <th>Pedido sugerido</th>
+          <th>Cajas</th>
+          <th>Unidades sueltas</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-pedido"></tbody>
+    </table>
+    <div id="pedido-empty" style="display:none;text-align:center;padding:2.5rem;color:#2e7d32;font-weight:600;">✓ Todo el inventario está sobre el quiebre</div>
   </div>
 </div>
 
-<!-- Modal ajuste de stock -->
-<div class="overlay" id="overlay-stock" onclick="closeIfBgStock(event)">
-  <div class="modal">
-    <h2 id="stock-title">Actualizar stock</h2>
-    <input type="hidden" id="stock-id" />
-    <div class="field">
-      <label>Operación</label>
-      <select id="stock-op">
-        <option value="add">➕ Sumar unidades (entrada)</option>
-        <option value="sub">➖ Restar unidades (salida)</option>
-        <option value="set">🔢 Establecer cantidad exacta</option>
-      </select>
-    </div>
-    <div class="field"><label>Cantidad</label><input type="number" id="stock-cant" min="0" value="1" /></div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeStockModal()">Cancelar</button>
-      <button class="btn btn-success" onclick="aplicarStock()">Aplicar</button>
-    </div>
+<!-- ===== RECEPCIONES ===== -->
+<div id="tab-recepciones" class="section">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+    <div style="font-size:1.1rem;font-weight:700;color:#6b1a1a;">📅 Historial de Recepciones</div>
   </div>
+  <div id="hist-list"><div style="text-align:center;padding:2rem;color:#9a7a5a;">Sin recepciones registradas aún.</div></div>
+</div>
+
+</div><!-- /container -->
+
+<!-- Modal agregar/editar producto -->
+<div class="overlay" id="ov-prod" onclick="closeIfBg(event,'ov-prod')">
+<div class="modal">
+  <h2 id="mp-title">Agregar producto</h2>
+  <input type="hidden" id="mp-id"/>
+  <div class="field"><label>Nombre</label><input type="text" id="mp-nombre"/></div>
+  <div class="field"><label>Categoría</label><select id="mp-cat"></select></div>
+  <div class="field"><label>Stock actual (unidades)</label><input type="number" id="mp-stock" min="0" value="0"/></div>
+  <div class="field"><label>Quiebre (unidades)</label><input type="number" id="mp-quiebre" min="0" value="1"/></div>
+  <div class="field"><label>Pedido sugerido (unidades)</label><input type="number" id="mp-pedido" min="1" value="6"/></div>
+  <div class="field"><label>Unidades por caja (1 = sin caja)</label><input type="number" id="mp-ucaja" min="1" value="1"/></div>
+  <div class="modal-actions">
+    <button class="btn btn-ghost" onclick="closeModal('ov-prod')">Cancelar</button>
+    <button class="btn btn-primary" onclick="guardarProd()">Guardar</button>
+  </div>
+</div>
+</div>
+
+<!-- Modal ajustar stock -->
+<div class="overlay" id="ov-stock" onclick="closeIfBg(event,'ov-stock')">
+<div class="modal">
+  <h2 id="ms-title">Ajustar stock</h2>
+  <input type="hidden" id="ms-id"/>
+  <div class="field"><label>Operación</label>
+    <select id="ms-op">
+      <option value="add">➕ Sumar unidades (entrada)</option>
+      <option value="sub">➖ Restar unidades (salida)</option>
+      <option value="set">🔢 Establecer cantidad exacta</option>
+    </select>
+  </div>
+  <div class="field"><label>Cantidad (unidades)</label><input type="number" id="ms-cant" min="0" value="1"/></div>
+  <div class="modal-actions">
+    <button class="btn btn-ghost" onclick="closeModal('ov-stock')">Cancelar</button>
+    <button class="btn btn-green" onclick="aplicarStock()">Aplicar</button>
+  </div>
+</div>
+</div>
+
+<!-- Modal recibir pedido -->
+<div class="overlay" id="ov-recibir" onclick="closeIfBg(event,'ov-recibir')">
+<div class="modal">
+  <h2>✅ Registrar Recepción de Pedido</h2>
+  <div class="recibir-box">
+    <h3>Productos a recibir</h3>
+    <div id="recibir-lista" style="font-size:.85rem;color:#2d2218;"></div>
+  </div>
+  <div class="field">
+    <label>Fecha de recepción</label>
+    <input type="date" id="recibir-fecha"/>
+  </div>
+  <p style="font-size:.82rem;color:#7a5c3c;margin-top:.5rem;">Al confirmar, el pedido se sumará al stock actual y quedará registrado en el historial.</p>
+  <div class="modal-actions">
+    <button class="btn btn-ghost" onclick="closeModal('ov-recibir')">Cancelar</button>
+    <button class="btn btn-green" onclick="confirmarRecepcion()">Confirmar recepción</button>
+  </div>
+</div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-const CATEGORIAS = [
-  "Whisky","Ron","Tequila","Vodka","Gin","Mezcal",
-  "Brandy / Cognac","Vino tinto","Vino blanco","Vino rosado",
-  "Cerveza","Licor / Aperitivo","Champagne / Espumoso","Otro"
+// =========================================================
+// DATOS INICIALES (Stock al 08/06/2026)
+// =========================================================
+const DATOS_INICIAL = [
+  // LICORES
+  {id:1,nombre:"Whisky JW Rojo",categoria:"Licores",stock:5,quiebre:2,pedido_u:4,ucaja:1},
+  {id:2,nombre:"Gin Beefitter",categoria:"Licores",stock:3,quiebre:2,pedido_u:2,ucaja:1},
+  {id:3,nombre:"Vodka Stoly 1 litro",categoria:"Licores",stock:11,quiebre:4,pedido_u:6,ucaja:1},
+  {id:4,nombre:"Ron Habana",categoria:"Licores",stock:4,quiebre:2,pedido_u:2,ucaja:1},
+  {id:5,nombre:"Campari",categoria:"Licores",stock:2,quiebre:1,pedido_u:2,ucaja:1},
+  {id:6,nombre:"Tequila Jose Cuervo Especial Blanco",categoria:"Licores",stock:2,quiebre:1,pedido_u:2,ucaja:1},
+  {id:7,nombre:"Cognac",categoria:"Licores",stock:4,quiebre:2,pedido_u:3,ucaja:1},
+  {id:8,nombre:"DIAMANTE Oporto",categoria:"Licores",stock:3,quiebre:2,pedido_u:4,ucaja:1},
+  {id:9,nombre:"ZALAMERO Jerez",categoria:"Licores",stock:4,quiebre:2,pedido_u:2,ucaja:1},
+  {id:10,nombre:"Cacao",categoria:"Licores",stock:5,quiebre:2,pedido_u:4,ucaja:1},
+  {id:11,nombre:"Menta",categoria:"Licores",stock:2,quiebre:1,pedido_u:2,ucaja:1},
+  {id:12,nombre:"Araucano",categoria:"Licores",stock:2,quiebre:1,pedido_u:2,ucaja:1},
+  {id:13,nombre:"Manzanilla",categoria:"Licores",stock:2,quiebre:1,pedido_u:2,ucaja:1},
+  {id:14,nombre:"Granadina",categoria:"Licores",stock:1,quiebre:1,pedido_u:1,ucaja:1},
+  {id:15,nombre:"Amareto",categoria:"Licores",stock:4,quiebre:1,pedido_u:2,ucaja:1},
+  {id:16,nombre:"Triple sec",categoria:"Licores",stock:5,quiebre:1,pedido_u:2,ucaja:1},
+  {id:17,nombre:"Cherry",categoria:"Licores",stock:4,quiebre:1,pedido_u:2,ucaja:1},
+  {id:18,nombre:"Fernet Branca",categoria:"Licores",stock:5,quiebre:1,pedido_u:5,ucaja:1},
+  {id:19,nombre:"Cinzano Bianco",categoria:"Licores",stock:3,quiebre:1,pedido_u:2,ucaja:1},
+  {id:20,nombre:"Cinzano Rosso",categoria:"Licores",stock:3,quiebre:1,pedido_u:2,ucaja:1},
+  {id:21,nombre:"Martini Bianco",categoria:"Licores",stock:2,quiebre:1,pedido_u:2,ucaja:1},
+  {id:22,nombre:"Pisco Mistral 40°",categoria:"Pisco",stock:4,quiebre:2,pedido_u:4,ucaja:1},
+  {id:23,nombre:"Pisco Alto del Carmen 35° 1L",categoria:"Pisco",stock:24,quiebre:6,pedido_u:18,ucaja:6},
+  {id:24,nombre:"Pisco Alto del Carmen 40° 3/4 Blanco",categoria:"Pisco",stock:15,quiebre:6,pedido_u:12,ucaja:6},
+  {id:25,nombre:"Pisco Alto del Carmen 35° 3/4",categoria:"Pisco",stock:30,quiebre:6,pedido_u:18,ucaja:6},
+  {id:26,nombre:"Pisco Capel 35° 1L",categoria:"Pisco",stock:30,quiebre:12,pedido_u:24,ucaja:6},
+  {id:27,nombre:"Pisco Mistral 35° 3/4",categoria:"Pisco",stock:12,quiebre:1,pedido_u:6,ucaja:6},
+  {id:28,nombre:"Pisco Mistral 35° 1L",categoria:"Pisco",stock:0,quiebre:1,pedido_u:18,ucaja:6},
+  {id:29,nombre:"Whisky JW Negro",categoria:"Licores",stock:1,quiebre:1,pedido_u:1,ucaja:1},
+  {id:30,nombre:"Ramazzotti",categoria:"Licores",stock:5,quiebre:2,pedido_u:5,ucaja:1},
+  {id:31,nombre:"Aperol",categoria:"Licores",stock:5,quiebre:2,pedido_u:3,ucaja:1},
+  // VINOS BLANCOS
+  {id:32,nombre:"Carmen 1/2 RXN Sauvignon Blanc",categoria:"Vino Blanco",stock:12,quiebre:1,pedido_u:12,ucaja:12},
+  {id:33,nombre:"Emiliana 1/2 Sauvignon Blanc",categoria:"Vino Blanco",stock:14,quiebre:1,pedido_u:12,ucaja:12},
+  {id:34,nombre:"Undurraga 1/2 Blanc",categoria:"Vino Blanco",stock:11,quiebre:1,pedido_u:12,ucaja:12},
+  {id:35,nombre:"Santa Emiliana Chardonnay",categoria:"Vino Blanco",stock:18,quiebre:1,pedido_u:12,ucaja:12},
+  {id:36,nombre:"Emiliana 3/4 Sauvignon Blanc",categoria:"Vino Blanco",stock:9,quiebre:1,pedido_u:12,ucaja:12},
+  // BOTELLÍN BLANCO
+  {id:37,nombre:"Botellín Carmen RXN 187,5cc",categoria:"Botellín",stock:44,quiebre:1,pedido_u:24,ucaja:24},
+  // VINOS TINTOS
+  {id:38,nombre:"Don Luis 3/4",categoria:"Vino Tinto",stock:23,quiebre:1,pedido_u:12,ucaja:12},
+  {id:39,nombre:"Pinot 3/4",categoria:"Vino Tinto",stock:8,quiebre:0,pedido_u:12,ucaja:12},
+  {id:40,nombre:"3 Estrellas 3/4 Santa Carolina",categoria:"Vino Tinto",stock:5,quiebre:1,pedido_u:12,ucaja:12},
+  {id:41,nombre:"Casillero Diablo 3/4 Carmenere",categoria:"Vino Tinto",stock:10,quiebre:1,pedido_u:12,ucaja:12},
+  {id:42,nombre:"Sta Emiliana Merlot 3/4",categoria:"Vino Tinto",stock:13,quiebre:0,pedido_u:12,ucaja:12},
+  {id:43,nombre:"Casillero Diablo 3/4 Merlot",categoria:"Vino Tinto",stock:9,quiebre:0,pedido_u:12,ucaja:12},
+  {id:44,nombre:"Carmen 1/2 MGX",categoria:"Vino Tinto",stock:17,quiebre:1,pedido_u:12,ucaja:12},
+  // BOTELLÍN TINTO
+  {id:45,nombre:"Botellín Carmen MGX 187,5cc",categoria:"Botellín",stock:8,quiebre:8,pedido_u:48,ucaja:24},
+  // ESPUMANTE
+  {id:46,nombre:"Baron Brut",categoria:"Espumante",stock:12,quiebre:1,pedido_u:24,ucaja:12},
 ];
 
-// Inicializar selects de categoría
-function initSelects() {
-  [document.getElementById('filtro-cat'), document.getElementById('f-cat')].forEach((sel, i) => {
-    if (i === 0) return; // filtro ya tiene "Todas"
-    sel.innerHTML = CATEGORIAS.map(c => `<option value="${c}">${c}</option>`).join('');
-  });
-  const fc = document.getElementById('filtro-cat');
-  CATEGORIAS.forEach(c => {
-    const o = document.createElement('option');
-    o.value = c; o.textContent = c;
-    fc.appendChild(o);
-  });
+const CATEGORIAS = ["Licores","Pisco","Vino Blanco","Vino Tinto","Botellín","Espumante","Otro"];
+
+// =========================================================
+// PERSISTENCIA
+// =========================================================
+function load(){
+  const d = localStorage.getItem('mordiscon-v2');
+  if(!d) { save(DATOS_INICIAL); return JSON.parse(JSON.stringify(DATOS_INICIAL)); }
+  return JSON.parse(d);
+}
+function save(d){ localStorage.setItem('mordiscon-v2',JSON.stringify(d)); }
+function loadHist(){ return JSON.parse(localStorage.getItem('mordiscon-hist')||'[]'); }
+function saveHist(h){ localStorage.setItem('mordiscon-hist',JSON.stringify(h)); }
+function nextId(d){ return d.length ? Math.max(...d.map(x=>x.id))+1 : 1; }
+
+// =========================================================
+// TABS
+// =========================================================
+function showTab(name, btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='pedido') renderPedido();
+  if(name==='recepciones') renderHist();
+  if(name==='inventario') renderInv();
 }
 
-// Persistencia
-function load() { return JSON.parse(localStorage.getItem('mordiscon-inv') || '[]'); }
-function save(data) { localStorage.setItem('mordiscon-inv', JSON.stringify(data)); }
-function nextId(data) { return data.length ? Math.max(...data.map(b => b.id)) + 1 : 1; }
+// =========================================================
+// HELPERS
+// =========================================================
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// Render principal
-function render() {
+function fmtStock(p){
+  if(p.ucaja<=1) return `<strong>${p.stock}</strong>`;
+  const cajas = Math.floor(p.stock / p.ucaja);
+  const sueltas = p.stock % p.ucaja;
+  let txt = `<strong>${p.stock}</strong>`;
+  if(cajas>0||sueltas>0){
+    let det = [];
+    if(cajas>0) det.push(`${cajas} caja${cajas>1?'s':''}`);
+    if(sueltas>0) det.push(`${sueltas} u.`);
+    txt += `<div class="stock-detail">(${det.join(' + ')})</div>`;
+  }
+  return txt;
+}
+
+function fmtCajasUnid(unidades, ucaja){
+  if(ucaja<=1) return {cajas:0, sueltas:unidades};
+  return {cajas: Math.floor(unidades/ucaja), sueltas: unidades%ucaja};
+}
+
+// =========================================================
+// INVENTARIO
+// =========================================================
+function renderInv(){
   const data = load();
-  const q = document.getElementById('search').value.toLowerCase();
+  const q = (document.getElementById('search').value||'').toLowerCase();
   const cat = document.getElementById('filtro-cat').value;
-
-  let items = data.filter(b =>
-    (!q || b.nombre.toLowerCase().includes(q)) &&
-    (!cat || b.categoria === cat)
+  const items = data.filter(b=>
+    (!q||b.nombre.toLowerCase().includes(q))&&
+    (!cat||b.categoria===cat)
   );
 
-  // Stats (sobre todos los datos, no el filtro)
-  const low   = data.filter(b => b.cantidad > 0 && b.cantidad <= b.minimo);
-  const empty = data.filter(b => b.cantidad === 0);
-  const valor = data.reduce((s, b) => s + (b.precio || 0) * b.cantidad, 0);
+  // Stats
+  const low = data.filter(b=>b.stock>0&&b.stock<=b.quiebre);
+  const empty = data.filter(b=>b.stock===0);
+  const conPedido = data.filter(b=>b.stock<=b.quiebre);
   document.getElementById('s-total').textContent = data.length;
-  document.getElementById('s-units').textContent = data.reduce((s,b)=>s+b.cantidad,0);
-  document.getElementById('s-valor').textContent = '$' + valor.toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2});
-  document.getElementById('s-low').textContent   = low.length;
+  document.getElementById('s-units').textContent = data.reduce((s,b)=>s+b.stock,0);
+  document.getElementById('s-low').textContent = low.length;
   document.getElementById('s-empty').textContent = empty.length;
+  document.getElementById('s-pedido').textContent = conPedido.length;
 
-  const tbody = document.getElementById('tbody');
-  const emptyMsg = document.getElementById('empty-msg');
+  const tbody = document.getElementById('tbody-inv');
+  const emptyDiv = document.getElementById('inv-empty');
 
-  if (items.length === 0) {
-    tbody.innerHTML = '';
-    emptyMsg.style.display = 'block';
-    return;
-  }
-  emptyMsg.style.display = 'none';
+  if(!items.length){ tbody.innerHTML=''; emptyDiv.style.display='block'; return; }
+  emptyDiv.style.display='none';
 
-  tbody.innerHTML = items.map(b => {
-    const precio = b.precio != null ? '$' + Number(b.precio).toLocaleString('es-MX',{minimumFractionDigits:2}) : '—';
+  tbody.innerHTML = items.map(b=>{
     let badge;
-    if (b.cantidad === 0)             badge = '<span class="badge badge-empty">🚫 Agotado</span>';
-    else if (b.cantidad <= b.minimo)  badge = '<span class="badge badge-low">⚠️ Bajo stock</span>';
-    else                              badge = '<span class="badge badge-ok">✓ OK</span>';
-
+    if(b.stock===0) badge='<span class="badge b-empty">🚫 Agotado</span>';
+    else if(b.stock<=b.quiebre) badge='<span class="badge b-low">⚠️ Bajo quiebre</span>';
+    else badge='<span class="badge b-ok">✓ OK</span>';
     return `<tr>
-      <td style="color:#6a5040">${b.id}</td>
-      <td><strong>${esc(b.nombre)}</strong>${b.notas ? `<br><small style="color:#6a5040">${esc(b.notas)}</small>` : ''}</td>
-      <td style="color:#9a8060">${esc(b.categoria)}</td>
-      <td><strong>${b.cantidad}</strong></td>
-      <td>${precio}</td>
+      <td><strong>${esc(b.nombre)}</strong></td>
+      <td><span style="color:#7a5c3c;font-size:.82rem">${esc(b.categoria)}</span></td>
+      <td>${fmtStock(b)}</td>
+      <td>${b.quiebre} u.</td>
       <td>${badge}</td>
-      <td>
-        <button class="btn btn-sm" style="background:#2a3d2a;color:#adf" onclick="openStockModal(${b.id})">Stock</button>
-        <button class="btn btn-sm btn-primary" onclick="openModal(${b.id})" style="margin:0 .3rem">Editar</button>
-        <button class="btn btn-sm btn-danger" onclick="eliminar(${b.id})">Borrar</button>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm" style="background:#e8f0fe;color:#1565c0" onclick="openStockModal(${b.id})">Ajustar</button>
+        <button class="btn btn-sm btn-wine" onclick="openModalProd(${b.id})" style="margin:0 .3rem">Editar</button>
+        <button class="btn btn-sm btn-red" onclick="eliminar(${b.id})">✕</button>
       </td>
     </tr>`;
   }).join('');
 }
 
-function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+// =========================================================
+// PEDIDO SEMANAL
+// =========================================================
+function getPedido(){
+  return load().filter(b=>b.stock<=b.quiebre);
 }
 
-// Modal agregar/editar
-function openModal(id) {
-  const overlay = document.getElementById('overlay');
-  document.getElementById('edit-id').value = id || '';
-  if (id) {
-    const b = load().find(x => x.id === id);
-    document.getElementById('modal-title').textContent = 'Editar producto';
-    document.getElementById('f-nombre').value = b.nombre;
-    document.getElementById('f-cat').value    = b.categoria;
-    document.getElementById('f-cant').value   = b.cantidad;
-    document.getElementById('f-min').value    = b.minimo;
-    document.getElementById('f-precio').value = b.precio ?? '';
-    document.getElementById('f-notas').value  = b.notas || '';
-  } else {
-    document.getElementById('modal-title').textContent = 'Agregar producto';
-    document.getElementById('f-nombre').value = '';
-    document.getElementById('f-cant').value   = 0;
-    document.getElementById('f-min').value    = 2;
-    document.getElementById('f-precio').value = '';
-    document.getElementById('f-notas').value  = '';
-  }
-  overlay.classList.add('open');
-  document.getElementById('f-nombre').focus();
+function renderPedido(){
+  const items = getPedido();
+  const tbody = document.getElementById('tbody-pedido');
+  const empty = document.getElementById('pedido-empty');
+  if(!items.length){ tbody.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  tbody.innerHTML = items.map(b=>{
+    const {cajas,sueltas} = fmtCajasUnid(b.pedido_u, b.ucaja);
+    const cajasStr = (b.ucaja>1&&cajas>0) ? `<strong>${cajas}</strong>` : '—';
+    const sueltasStr = sueltas>0 ? `<strong>${sueltas}</strong>` : (b.ucaja<=1 ? `<strong>${b.pedido_u}</strong>` : '—');
+    return `<tr>
+      <td><strong>${esc(b.nombre)}</strong></td>
+      <td style="color:#7a5c3c;font-size:.82rem">${esc(b.categoria)}</td>
+      <td>${fmtStock(b)}</td>
+      <td>${b.quiebre} u.</td>
+      <td><strong style="color:#a0522d">${b.pedido_u} u.</strong></td>
+      <td>${cajasStr}</td>
+      <td>${sueltasStr}</td>
+    </tr>`;
+  }).join('');
 }
-function closeModal() { document.getElementById('overlay').classList.remove('open'); }
-function closeIfBg(e) { if (e.target === document.getElementById('overlay')) closeModal(); }
 
-function guardar() {
-  const nombre = document.getElementById('f-nombre').value.trim();
-  if (!nombre) { toast('El nombre es obligatorio', true); return; }
+// =========================================================
+// RECIBIR PEDIDO
+// =========================================================
+function openRecibirModal(){
+  const items = getPedido();
+  if(!items.length){ toast('No hay productos bajo quiebre 🎉'); return; }
+
+  const lista = document.getElementById('recibir-lista');
+  lista.innerHTML = items.map(b=>{
+    const {cajas,sueltas} = fmtCajasUnid(b.pedido_u, b.ucaja);
+    let detalle = `${b.pedido_u} unidades`;
+    if(b.ucaja>1){
+      const parts=[];
+      if(cajas>0) parts.push(`${cajas} caja${cajas>1?'s':''}`);
+      if(sueltas>0) parts.push(`${sueltas} u. sueltas`);
+      if(parts.length) detalle += ` (${parts.join(' + ')})`;
+    }
+    return `<div style="padding:.3rem 0;border-bottom:1px solid #c8e6c9">• <strong>${esc(b.nombre)}</strong>: ${detalle}</div>`;
+  }).join('');
+
+  // Default: próximo sábado
+  const hoy = new Date();
+  const diasHastaViernes = (6 - hoy.getDay() + 7) % 7 || 7;
+  const sabado = new Date(hoy);
+  sabado.setDate(hoy.getDate() + diasHastaViernes);
+  document.getElementById('recibir-fecha').value = sabado.toISOString().slice(0,10);
+
+  document.getElementById('ov-recibir').classList.add('open');
+}
+
+function confirmarRecepcion(){
+  const fecha = document.getElementById('recibir-fecha').value;
+  if(!fecha){ toast('Ingresa la fecha de recepción',true); return; }
 
   const data = load();
-  const editId = document.getElementById('edit-id').value;
-  const precio = document.getElementById('f-precio').value;
+  const hist = loadHist();
+  const items = getPedido(); // calcula antes de modificar
 
-  if (editId) {
-    const b = data.find(x => x.id === Number(editId));
-    b.nombre    = nombre;
-    b.categoria = document.getElementById('f-cat').value;
-    b.cantidad  = Number(document.getElementById('f-cant').value) || 0;
-    b.minimo    = Number(document.getElementById('f-min').value)  || 0;
-    b.precio    = precio !== '' ? Number(precio) : null;
-    b.notas     = document.getElementById('f-notas').value.trim();
-  } else {
-    data.push({
-      id:          nextId(data),
-      nombre,
-      categoria:   document.getElementById('f-cat').value,
-      cantidad:    Number(document.getElementById('f-cant').value) || 0,
-      minimo:      Number(document.getElementById('f-min').value)  || 0,
-      precio:      precio !== '' ? Number(precio) : null,
-      notas:       document.getElementById('f-notas').value.trim(),
-      fecha:       new Date().toISOString().slice(0,10),
-    });
-  }
+  const recibidos = [];
+  items.forEach(b=>{
+    const prod = data.find(x=>x.id===b.id);
+    if(prod){
+      prod.stock += prod.pedido_u;
+      recibidos.push({nombre:prod.nombre, pedido_u:prod.pedido_u, ucaja:prod.ucaja});
+    }
+  });
+
   save(data);
-  closeModal();
-  render();
-  toast(editId ? 'Producto actualizado ✓' : 'Producto agregado ✓');
+  hist.unshift({ fecha, productos: recibidos });
+  saveHist(hist);
+
+  closeModal('ov-recibir');
+  renderPedido();
+  toast(`✅ Recepción registrada — ${recibidos.length} productos sumados al stock`);
 }
 
-// Modal stock
-function openStockModal(id) {
-  const b = load().find(x => x.id === id);
-  document.getElementById('stock-id').value = id;
-  document.getElementById('stock-title').textContent = `Stock — ${b.nombre}`;
-  document.getElementById('stock-cant').value = 1;
-  document.getElementById('overlay-stock').classList.add('open');
+// =========================================================
+// HISTORIAL
+// =========================================================
+function renderHist(){
+  const hist = loadHist();
+  const el = document.getElementById('hist-list');
+  if(!hist.length){ el.innerHTML='<div style="text-align:center;padding:2rem;color:#9a7a5a;">Sin recepciones registradas aún.</div>'; return; }
+  el.innerHTML = hist.map(h=>{
+    const tags = h.productos.map(p=>{
+      const {cajas,sueltas} = fmtCajasUnid(p.pedido_u, p.ucaja||1);
+      let det = `${p.pedido_u}u`;
+      if((p.ucaja||1)>1){ const parts=[]; if(cajas>0)parts.push(`${cajas}cj`); if(sueltas>0)parts.push(`${sueltas}u`); if(parts.length) det=parts.join('+'); }
+      return `<span class="hist-tag">${esc(p.nombre)} <strong>(${det})</strong></span>`;
+    }).join('');
+    const fechaFmt = new Date(h.fecha+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    return `<div class="hist-item"><div class="hist-date">📅 ${fechaFmt}</div><div class="hist-productos">${tags}</div></div>`;
+  }).join('');
 }
-function closeStockModal() { document.getElementById('overlay-stock').classList.remove('open'); }
-function closeIfBgStock(e) { if (e.target === document.getElementById('overlay-stock')) closeStockModal(); }
 
-function aplicarStock() {
-  const id   = Number(document.getElementById('stock-id').value);
-  const op   = document.getElementById('stock-op').value;
-  const cant = Number(document.getElementById('stock-cant').value) || 0;
+// =========================================================
+// MODAL PRODUCTO
+// =========================================================
+function openModalProd(id){
   const data = load();
-  const b    = data.find(x => x.id === id);
-  if (op === 'add') b.cantidad += cant;
-  else if (op === 'sub') b.cantidad = Math.max(0, b.cantidad - cant);
-  else b.cantidad = Math.max(0, cant);
-  save(data);
-  closeStockModal();
-  render();
-  toast(`Stock actualizado: ${b.cantidad} unidades ✓`);
+  document.getElementById('mp-id').value = id||'';
+  if(id){
+    const b = data.find(x=>x.id===id);
+    document.getElementById('mp-title').textContent='Editar producto';
+    document.getElementById('mp-nombre').value=b.nombre;
+    document.getElementById('mp-cat').value=b.categoria;
+    document.getElementById('mp-stock').value=b.stock;
+    document.getElementById('mp-quiebre').value=b.quiebre;
+    document.getElementById('mp-pedido').value=b.pedido_u;
+    document.getElementById('mp-ucaja').value=b.ucaja||1;
+  } else {
+    document.getElementById('mp-title').textContent='Agregar producto';
+    document.getElementById('mp-nombre').value='';
+    document.getElementById('mp-stock').value=0;
+    document.getElementById('mp-quiebre').value=1;
+    document.getElementById('mp-pedido').value=6;
+    document.getElementById('mp-ucaja').value=1;
+  }
+  document.getElementById('ov-prod').classList.add('open');
+  setTimeout(()=>document.getElementById('mp-nombre').focus(),50);
 }
 
-function eliminar(id) {
-  const b = load().find(x => x.id === id);
-  if (!confirm(`¿Eliminar "${b.nombre}"?`)) return;
-  save(load().filter(x => x.id !== id));
-  render();
+function guardarProd(){
+  const nombre = document.getElementById('mp-nombre').value.trim();
+  if(!nombre){ toast('El nombre es obligatorio',true); return; }
+  const data = load();
+  const eid = document.getElementById('mp-id').value;
+  const obj = {
+    nombre,
+    categoria: document.getElementById('mp-cat').value,
+    stock: +document.getElementById('mp-stock').value||0,
+    quiebre: +document.getElementById('mp-quiebre').value||0,
+    pedido_u: +document.getElementById('mp-pedido').value||1,
+    ucaja: +document.getElementById('mp-ucaja').value||1,
+  };
+  if(eid){ Object.assign(data.find(x=>x.id===+eid), obj); }
+  else { data.push({id:nextId(data),...obj}); }
+  save(data);
+  closeModal('ov-prod');
+  renderInv();
+  toast(eid?'Producto actualizado ✓':'Producto agregado ✓');
+}
+
+// =========================================================
+// MODAL STOCK
+// =========================================================
+function openStockModal(id){
+  const b = load().find(x=>x.id===id);
+  document.getElementById('ms-id').value=id;
+  document.getElementById('ms-title').textContent=`Ajustar stock — ${b.nombre}`;
+  document.getElementById('ms-cant').value=1;
+  document.getElementById('ov-stock').classList.add('open');
+}
+
+function aplicarStock(){
+  const id=+document.getElementById('ms-id').value;
+  const op=document.getElementById('ms-op').value;
+  const cant=+document.getElementById('ms-cant').value||0;
+  const data=load();
+  const b=data.find(x=>x.id===id);
+  if(op==='add') b.stock+=cant;
+  else if(op==='sub') b.stock=Math.max(0,b.stock-cant);
+  else b.stock=Math.max(0,cant);
+  save(data);
+  closeModal('ov-stock');
+  renderInv();
+  toast(`Stock actualizado: ${b.stock} unidades ✓`);
+}
+
+function eliminar(id){
+  const b=load().find(x=>x.id===id);
+  if(!confirm(`¿Eliminar "${b.nombre}"?`)) return;
+  save(load().filter(x=>x.id!==id));
+  renderInv();
   toast('Producto eliminado');
 }
 
-// Exportar CSV
-function exportCSV() {
-  const data = load();
-  if (!data.length) { toast('No hay datos para exportar', true); return; }
-  const rows = [['ID','Nombre','Categoria','Cantidad','Minimo','Precio','Notas','Fecha']];
-  data.forEach(b => rows.push([b.id, b.nombre, b.categoria, b.cantidad, b.minimo, b.precio ?? '', b.notas, b.fecha || '']));
-  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
-  a.download = 'inventario-licores.csv';
+// =========================================================
+// MODALES — HELPERS
+// =========================================================
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function closeIfBg(e,id){ if(e.target===document.getElementById(id)) closeModal(id); }
+
+// =========================================================
+// EXPORTAR CSV
+// =========================================================
+function exportCSV(){
+  const data=load();
+  const rows=[['Nombre','Categoría','Stock (u)','Quiebre (u)','Pedido (u)','Unid/Caja','Cajas en stock','Unidades sueltas']];
+  data.forEach(b=>{
+    const cajas=b.ucaja>1?Math.floor(b.stock/b.ucaja):0;
+    const sueltas=b.ucaja>1?b.stock%b.ucaja:b.stock;
+    rows.push([b.nombre,b.categoria,b.stock,b.quiebre,b.pedido_u,b.ucaja,cajas,sueltas]);
+  });
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='inventario-licores.csv';
   a.click();
   toast('CSV exportado ✓');
 }
 
-// Toast
-function toast(msg, error=false) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast' + (error ? ' error' : '');
-  void t.offsetWidth;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
+// =========================================================
+// EXPORTAR PEDIDO A EXCEL
+// =========================================================
+function exportPedidoXLSX(){
+  const items = getPedido();
+  if(!items.length){ toast('No hay productos en el pedido',true); return; }
+
+  const hoy = new Date().toLocaleDateString('es-CL');
+  const wsData = [
+    ['EL MORDISCÓN — Pedido Semanal', '', '', '', '', ''],
+    [`Generado: ${hoy}`, '', '', '', '', ''],
+    [],
+    ['Producto','Categoría','Stock actual','Quiebre','Pedido (unidades)','Cajas','Unidades sueltas'],
+  ];
+
+  items.forEach(b=>{
+    const {cajas,sueltas} = fmtCajasUnid(b.pedido_u, b.ucaja);
+    wsData.push([
+      b.nombre, b.categoria, b.stock, b.quiebre, b.pedido_u,
+      b.ucaja>1&&cajas>0 ? cajas : '',
+      b.ucaja>1&&sueltas>0 ? sueltas : (b.ucaja<=1 ? b.pedido_u : ''),
+    ]);
+  });
+
+  wsData.push([]);
+  wsData.push(['TOTAL UNIDADES A RECIBIR','','','',items.reduce((s,b)=>s+b.pedido_u,0),'','']);
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols']=[{wch:38},{wch:14},{wch:14},{wch:10},{wch:18},{wch:8},{wch:16}];
+  XLSX.utils.book_append_sheet(wb,'Pedido Semanal',ws);
+  XLSX.writeFile(wb,`pedido-semanal-${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('Excel del pedido descargado ✓');
 }
 
-initSelects();
-render();
+// =========================================================
+// TOAST
+// =========================================================
+function toast(msg,err=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast'+(err?' err':'');
+  void t.offsetWidth; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// =========================================================
+// INIT
+// =========================================================
+function init(){
+  // Poblar selects de categoría
+  const cats = CATEGORIAS;
+  ['mp-cat'].forEach(id=>{
+    const sel=document.getElementById(id);
+    sel.innerHTML=cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  });
+  const fc=document.getElementById('filtro-cat');
+  cats.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; fc.appendChild(o); });
+  renderInv();
+}
+
+init();
 </script>
 </body>
 </html>
