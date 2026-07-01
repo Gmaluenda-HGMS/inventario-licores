@@ -644,7 +644,7 @@ function exportPedidoXLSX(){
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(wsData);
   ws['!cols']=[{wch:38},{wch:14},{wch:14},{wch:10},{wch:18},{wch:8},{wch:16}];
-  XLSX.utils.book_append_sheet(wb,'Pedido Semanal',ws);
+  XLSX.utils.book_append_sheet(wb,ws,'Pedido Semanal');
   XLSX.writeFile(wb,`pedido-semanal-${new Date().toISOString().slice(0,10)}.xlsx`);
   toast('Excel del pedido descargado ✓');
 }
